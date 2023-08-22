@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <p th:text="${anyBoard.title}"></p>
+    <p th:text="${anyBoard.content}"></p>
+    <a th:href="@{/board/delete(id=${anyBoard.id})}" >게시글 삭제</a>
+    <a th:href="@{/board/modify/{id}(id = ${anyBoard.id})}">게시글 수정</a>
+</body>
+</html>
