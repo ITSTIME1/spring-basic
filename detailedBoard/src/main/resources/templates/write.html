@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+    <!-- Style -->
+    <link rel="stylesheet" th:href="@{/css/write.css}">
+
+
+    <title>Write</title>
+</head>
+<body>
+<div class="content">
+    <div class="profile">
+        <a href="">프로필</a>
+        <a href="">로그인</a>
+        <a href="">회원가입</a>
+    </div>
+
+
+    <div class="container">
+        <form th:action="@{/post}" method = "post">
+            <p>제목</p>
+            <input name="title" type="text" class="title" placeholder="제목">
+            <p>내용</p>
+            <textarea name="content" placeholder="글을 작성해주세요."></textarea>
+            <button type="submit">작성</button>
+        </form>
+
+    </div>
+
+    <div class="footer">
+
+    </div>
+
+</div>
+
+<script th:src="@{/js/jquery-3.3.1.min.js}"></script>
+<script th:src="@{/js/popper.min.js}"></script>
+<script th:src="@{/js/bootstrap.min.js}"></script>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

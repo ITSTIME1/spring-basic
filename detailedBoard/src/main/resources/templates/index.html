@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/icomoon/style.css}">
+    <link rel="stylesheet" th:href="@{/css/owl.carousel.min.css}">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <!-- Style -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+
+
+    <title>Detailed Board</title>
+</head>
+<body>
+
+
+<div class="content">
+    <div class="profile">
+        <a href="">프로필</a>
+        <a href="">로그인</a>
+        <a href="">회원가입</a>
+    </div>
+    <div class="container">
+        <div class="top-section">
+            <div class="title">Board</div>
+            <input type="search" id="site-search" name="q" placeholder="검색어를 입력 해주세요." />
+        </div>
+
+
+        <div class="table-responsive">
+            <!--여기가 head 부분이 되는 거고-->
+            <table class="table table-striped custom-table">
+                <thead>
+                <tr>
+                    <th scope="col">번호</th>
+                    <th scope="col">작성자</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">작성일</th>
+                    <th scope="col">조회수</th>
+                    <th scope="col">좋아요</th>
+                </tr>
+                </thead>
+                <!--여기가 바디가 되는 거고 -->
+                <tbody>
+                <tr scope="row">
+                    <td>
+                        (N) 1392
+                    </td>
+                    <td><a href="#">James Yates</a></td>
+                    <td>
+                        <a href="">이런 식으로 작성되면 될거 같은데?</a>
+                    </td>
+                    <td>2023-08-23</td>
+                    <td>10</td>
+                    <td><a href="#">23</a></td>
+
+                </tr>
+
+                <tr>
+
+                    <td>4616</td>
+                    <td><a href="#">Matthew Wasil</a></td>
+                    <td>
+                        <a href="">Web Designer</a>
+                    </td>
+                    <td>+02 020 3994 929</td>
+                    <td>London College</td>
+                    <td><a href="#" class="more">Details</a></td>
+                </tr>
+                <tr>
+
+                    <td>9841</td>
+                    <td><a href="#">Sampson Murphy</a></td>
+                    <td>
+                        <a href="">Web Designer</a>
+                    </td>
+                    <td>+01 352 1125 0192</td>
+                    <td>Senior High</td>
+                    <td><a href="#" class="more">Details</a></td>
+                </tr>
+                <tr>
+
+                    <td>9548</td>
+                    <td><a href="#">Gaspar Semenov</a></td>
+                    <td>
+                        <a href="">Web Designer</a>
+                    </td>
+                    <td>+92 020 3994 929</td>
+                    <td>College</td>
+                    <td><a href="#" class="more">Details</a></td>
+                </tr>
+
+                <tr>
+
+                    <td>4616</td>
+                    <td><a href="#">Matthew Wasil</a></td>
+                    <td>
+                        <a href="">Web Designer</a>
+                    </td>
+                    <td>+02 020 3994 929</td>
+                    <td>London College</td>
+                    <td><a href="#" class="more">Details</a></td>
+                </tr>
+                <tr>
+
+                    <td>9841</td>
+                    <td><a href="#">Sampson Murphy</a></td>
+                    <td>
+                        <a href="">Web Designer</a>
+                    </td>
+                    <td>+01 352 1125 0192</td>
+                    <td>Senior High</td>
+
+                    <td><a href="#" class="more">Details</a></td>
+                </tr>
+                <tr>
+
+                    <td>9548</td>
+                    <td><a href="#">Gaspar Semenov</a></td>
+                    <td>
+                        <a href="">Web Designer</a>
+                    </td>
+                    <td>2023-08-23</td>
+                    <td>College</td>
+                    <td><a href="#" class="more">Details</a></td>
+                </tr>
+
+                </tbody>
+            </table>
+        </div>
+        <div class="paging">
+            <div class=""></div>
+            <div>1 2 3 4</div>
+            <button th:onclick="|location.href='@{write-post}'|">글쓰기</button>
+        </div>
+    </div>
+
+</div>
+
+<script th:src="@{/js/jquery-3.3.1.min.js}"></script>
+<script th:src="@{/js/popper.min.js}"></script>
+<script th:src="@{/js/bootstrap.min.js}"></script>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>
