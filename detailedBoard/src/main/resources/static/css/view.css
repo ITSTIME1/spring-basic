@@ -1,0 +1,111 @@
+* {
+    margin: 0;
+    padding : 0;
+
+}
+
+html {
+    width: 100%;
+    height: 100%
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    background-color: #3c373e;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+.subContainer {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    height: 90%;
+    position: absolute;
+
+}
+.titleContainer {
+    width: 100%;
+    height: 10%;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: #3c373e;
+    margin-bottom: 20px;
+    color: white;
+
+}
+.contentContainer {
+
+    background-color: #3c373e;
+    color: white;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.commentContainer {
+    margin-top: 20px;
+    background-color: #3c373e;
+    color: white;
+    width: 100%;
+    height: 20%;
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.eachContainer {
+    width: 100%;
+    height: 100%;
+    background-color: #7abaff;
+}
+.eachContainer > textarea {
+
+    width: 100%;
+    height: 100%;
+    resize: none;
+    box-sizing: content-box;
+    background-color: white;
+}
+
+.viewerContainer {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: right;
+    height: 20%;
+}
+.viewContentContainer {
+    display: flex;
+    justify-content: right;
+    width: 100%;
+}
+.likeContainer {
+    width: 30%;
+    box-sizing: border-box;
+}
+.viewContainer {
+    width: 10%;
+    box-sizing: border-box;
+}
+.likeContainer > a {
+    width: auto;
+}
+
+p {
+    color:white;
+}
+.viewerContainer > p {
+    margin-left: 15px;
+    width: auto;
+    color:white;
+}

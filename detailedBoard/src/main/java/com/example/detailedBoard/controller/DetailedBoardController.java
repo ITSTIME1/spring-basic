@@ -4,7 +4,9 @@ import com.example.detailedBoard.domain.Post;
 import com.example.detailedBoard.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -19,24 +21,35 @@ public class DetailedBoardController {
 
     // 초기페이지
     @GetMapping("/")
-    public String indexPage() {
+    public String indexPage(Model model) {
+        // model객체에 넘겨서 index로 넘겨준다.
+        model.addAttribute("list", postService.readAllPost());
         return "index";
     }
 
-    // 글쓰기 페이지
+    // 글쓰기 페이지 이동
     @GetMapping("/write-post")
-    public String writePage() {
+    public String moveWritePage() {
         return "write";
     }
 
-    // 글 작성 목록 받기
+    // 글 작성 하기
     @PostMapping("/post")
-    public String getPost(Post post) {
-        // post로 객체를 받아주고 그러면 Post에 있을테니까
-        // 이제 시간을 어떻게 할지가 고민인데.
+    public String createPost(Post post) {
+
         postService.createPost(post);
         return "redirect:/";
     }
+
+    // 해당 글 보기
+    @GetMapping("/view-post/{id}")
+    public String viewPost(@PathVariable(value="id") Integer id, Model model) {
+        // 조회수를 먼저 올리고 나서 포스트를 가지고 오자
+        postService.incrementViewCount(id);
+        model.addAttribute("post", postService.readAnyPost(id));
+        return "view";
+    }
     // 회원 페이지
     // 로그인 페이지
+
 }

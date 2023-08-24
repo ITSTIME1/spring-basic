@@ -19,4 +19,8 @@ public class Post {
     private String beforeDatetime;
     @Column
     private String currentDatetime;
+    @Column
+    private int viewCount = 0;
+    @Column
+    private int likeCount = 0;
 }
