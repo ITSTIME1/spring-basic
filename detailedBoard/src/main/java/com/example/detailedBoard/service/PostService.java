@@ -46,4 +46,8 @@ public class PostService {
         postRepository.viewCountUpdate(id);
     }
 
+    public void incrementLikeCount(Integer id) {
+        postRepository.likeCountUpdate(id);
+    }
+
 }

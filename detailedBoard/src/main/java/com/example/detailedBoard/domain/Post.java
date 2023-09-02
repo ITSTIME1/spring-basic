@@ -16,8 +16,6 @@ public class Post {
     @Column
     private String content;
     @Column
-    private String beforeDatetime;
-    @Column
     private String currentDatetime;
     @Column
     private int viewCount = 0;

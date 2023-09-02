@@ -23,7 +23,7 @@ public class PostRepository implements PostRepositoryInterface {
 
     @Override
     public void create(Post post) {
-        String sql = "insert into post values(?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "insert into post values(?, ?, ?, ?, ?, ?, ?)";
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -41,9 +41,8 @@ public class PostRepository implements PostRepositoryInterface {
             pstmt.setString(3, post.getTitle());
             pstmt.setString(4, post.getContent());
             pstmt.setString(5, post.getCurrentDatetime());
-            pstmt.setString(6, post.getCurrentDatetime());
+            pstmt.setInt(6, post.getViewCount());
             pstmt.setInt(7, post.getViewCount());
-            pstmt.setInt(8, post.getViewCount());
 
 
             pstmt.executeUpdate();
@@ -80,6 +79,7 @@ public class PostRepository implements PostRepositoryInterface {
             // 존재한다면
             if (rs.next()) {
                 Post post = new Post();
+                post.setId(rs.getInt("id"));
                 post.setTitle(rs.getString("title"));
                 post.setContent(rs.getString("content"));
                 post.setLikeCount(rs.getInt("likeCount"));
@@ -91,6 +91,9 @@ public class PostRepository implements PostRepositoryInterface {
 
         } catch (Exception e) {
             throw new IllegalStateException(e);
+        } finally {
+            // 주어진 connection객체를 수행하고 연결을 닫는다.
+            DataSourceUtils.releaseConnection(con, dataSource);
         }
         return null;
     }
@@ -129,6 +132,9 @@ public class PostRepository implements PostRepositoryInterface {
             return postList;
         } catch (Exception e) {
             throw new IllegalStateException(e);
+        } finally {
+            // 주어진 connection객체를 수행하고 연결을 닫는다.
+            DataSourceUtils.releaseConnection(con, dataSource);
         }
     }
 
@@ -149,18 +155,48 @@ public class PostRepository implements PostRepositoryInterface {
         try {
             con = dataSource.getConnection();
             pstmt = con.prepareStatement(sql);
+            // 10초를 타임아웃으로 설정해둔뒤
+            // 10초가 넘어간다면 SQLtimeException이 발생하도록 한다.
+            pstmt.setQueryTimeout(10);
             pstmt.setInt(1, id);
             rs = pstmt.executeQuery();
 
         } catch (Exception e) {
             throw new IllegalStateException(e);
+        } finally {
+            // 주어진 connection객체를 수행하고 연결을 닫는다.
+            DataSourceUtils.releaseConnection(con, dataSource);
         }
-
     }
 
     // 좋아요 개수 올리기.
     @Override
     public void likeCountUpdate(Integer id) {
+        // 간단한 update 쿼리문인데도 불구하고 시간이 30005ms나 걸린다. 왜그럴까?
+        // 1ms = 0.001 기 때문에
+        // 30005ms = 30005 * 0.001s 이 되기 때문에
+        // 약 30.005초 정도 걸린다.
+        // 간단한 쿼리문인데도 30초나 걸리나?
+        // 보아하니 Connection poll에 대해서 이해를 해야 하는 것 같다.
+        String sql = "update post set likeCount = likeCount + 1 where id = ?";
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
 
+        // 좋아요를 올려준다.
+        try {
+            con = dataSource.getConnection();
+            pstmt = con.prepareStatement(sql);
+            // 10초를 타임아웃으로 설정해둔뒤
+            // 10초가 넘어간다면 SQLtimeException이 발생하도록 한다.
+            pstmt.setQueryTimeout(10);
+            pstmt.setInt(1, id);
+            rs = pstmt.executeQuery();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            // 주어진 connection객체를 수행하고 연결을 닫는다.
+            DataSourceUtils.releaseConnection(con, dataSource);
+        }
     }
 }

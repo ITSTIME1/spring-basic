@@ -16,12 +16,12 @@
         <div class="subContainer">
             <!--좋아요, 댓글수, 시간-->
             <div class="viewerContainer">
-                <p th:text="${post.currentDatetime}">현재시간</p>
+                <p th:text="${post.currentDatetime}"></p>
                 <div class="viewContentContainer">
                     <div class="likeContainer">
                         ❤
                         <br>
-                        <a href="" th:text="${post.likeCount}"></a>
+                        <a th:href="@{/like-count/{id}(id = ${post.id})}" th:text="${post.likeCount}"></a>
                     </div>
 
                     <div class="viewContainer">
@@ -53,7 +53,7 @@
 
     <script th:src="@{/js/jquery-3.3.1.min.js}"></script>
     <script th:src="@{/js/popper.min.js}"></script>
-    <script th:src="@{/js/bootstrap.min.js}">ß</script>
+    <script th:src="@{/js/bootstrap.min.js}"></script>
     <script th:src="@{/js/main.js}"></script>
 </body>
 </html>

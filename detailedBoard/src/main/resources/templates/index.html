@@ -48,8 +48,8 @@
                 <!--여기가 바디가 되는 거고 -->
                 <tbody>
                     <tr th:each="board: ${list}" scope="row">
-                        <td th:text="${board.getId()}">Nice</td>
-                        <td th:text="${board.getUsername()}"><a href="#">James Yates</a></td>
+                        <td th:text="${board.id}">Nice</td>
+                        <td th:text="${board.username}"><a href="#">James Yates</a></td>
 
                         <td>
                             <a th:text="${board.getTitle()}" th:href="@{/view-post/{id}(id = ${board.getId()})}">
