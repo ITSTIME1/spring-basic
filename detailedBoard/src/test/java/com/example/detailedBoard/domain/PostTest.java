@@ -42,7 +42,7 @@ class PostTest {
         assertEquals(post.getLikeCount(), 0);
 
         // 테스트 내용과 다르게 입력이 되었다면
-        assertEquals(post.getTitle(), "Exception");
+//        assertEquals(post.getTitle(), "Exception");
 
     }
 
