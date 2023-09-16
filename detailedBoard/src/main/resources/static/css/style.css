@@ -18,6 +18,7 @@ a {
     -webkit-transition: .3s all ease;
     -o-transition: .3s all ease;
     transition: .3s all ease;
+    color: white;
 }
 
 a, a:hover {
@@ -118,6 +119,9 @@ h2 {
     align-content: center;
     width: 100%;
     color: white;
+}
+.profile > a {
+    margin : 10px;
 }
 
 .paging {

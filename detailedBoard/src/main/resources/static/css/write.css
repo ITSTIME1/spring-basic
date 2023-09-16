@@ -50,12 +50,11 @@ form {
     margin: 0 auto;
     margin-top: 40px;
     background-color: #3c373e;
-
-
 }
 form > input {
     width: 100%;
     height: 30px;
+    color: white;
     box-sizing: border-box;
     background-color: #3c373e;
     margin-bottom: 20px;

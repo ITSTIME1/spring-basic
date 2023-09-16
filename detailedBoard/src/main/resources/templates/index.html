@@ -1,5 +1,6 @@
 <!doctype html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -16,14 +17,22 @@
 
     <title>Detailed Board</title>
 </head>
+
 <body>
 
 
 <div class="content">
     <div class="profile">
-        <a href="">프로필</a>
-        <a href="">로그인</a>
-        <a href="">회원가입</a>
+        <a id = "profile" th:if="${session.loginUser != null}" th:href="@{/profile}">[[ ${session.loginUser.email} ]]</a>
+        <a th:href="@{/register}">
+            회원가입
+        </a>
+
+        <a id = "logout" th:href="@{/logout}">
+            로그아웃
+        </a>
+<!--        인증되지 않은 사용자는 로그인을 보여줌-->
+        <a id = "loginTag" th:href="@{/login}">로그인</a>
     </div>
     <div class="container">
         <div class="top-section">
@@ -52,7 +61,7 @@
                         <td th:text="${board.username}"><a href="#">James Yates</a></td>
 
                         <td>
-                            <a th:text="${board.getTitle()}" th:href="@{/view-post/{id}(id = ${board.getId()})}">
+                            <a style="color:orange" th:text="${board.getTitle()}" th:href="@{/view-post/{id}(id = ${board.getId()})}">
                                 이런 식으로 작성되면 될거 같은데?
                             </a>
                         </td>

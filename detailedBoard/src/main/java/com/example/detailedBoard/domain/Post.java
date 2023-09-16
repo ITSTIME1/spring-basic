@@ -3,7 +3,6 @@ package com.example.detailedBoard.domain;
 import jakarta.persistence.*;
 import lombok.Data;
 
-@Entity
 @Data
 public class Post {
     @Id

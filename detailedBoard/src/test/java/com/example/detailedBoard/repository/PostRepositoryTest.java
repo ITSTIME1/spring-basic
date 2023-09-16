@@ -175,6 +175,9 @@ class PostRepositoryTest {
 
             if (rs.next()) {
                 assertEquals(previousID + 1, rs.getInt(1));
+                assertNotNull(post.getUsername());
+                assertNotNull(post.getContent());
+                assertNotNull(post.getCurrentDatetime());
             }
 
         } catch (SQLException e) {
