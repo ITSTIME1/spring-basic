@@ -9,6 +9,7 @@ import lombok.Data;
 public class LoginCustomer {
     @Id
     int id;
+    String userId;
     String email;
     String password;
 }

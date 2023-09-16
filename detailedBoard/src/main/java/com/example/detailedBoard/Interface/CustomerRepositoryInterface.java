@@ -9,13 +9,9 @@ public interface CustomerRepositoryInterface {
 
     // 유저 정보 가져오기
     LoginCustomer getAnyUser(String email, String password);
-    // 아이디 변경
-    // 비밀번호 변경
 
-    /**
-     * 이메일 변경 같은 경우는 이메일 중복 여부를 판단해서, 이메일이 이미 있는 경우는 다른 이메일을 사용해서 가입하게끔
-     */
-    // 이메일 변경
+    // 유저 게시물 개수 올리기.
+    boolean incrementPostCount(String userId);
 
     // 아이디 중복확인
     Boolean isUserIDAvailable(String userId);
@@ -24,4 +20,9 @@ public interface CustomerRepositoryInterface {
 
     // 패스워드 중복확인
     String isUserPasswordAvailable(String userEmail);
+
+
+    // 아이디 변경
+    // 비밀번호 변경
+    // 이메일 변경
 }

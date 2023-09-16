@@ -1,5 +1,6 @@
 package com.example.detailedBoard.service;
 
+import com.example.detailedBoard.domain.LoginCustomer;
 import com.example.detailedBoard.domain.Post;
 import com.example.detailedBoard.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,32 +22,39 @@ public class PostService {
     }
 
     /**
-     * 새로 생성하는 포스트는 이전 beforeDateTime이 존재하지 않고 새로운 dateTime만이 존재하기 때문에
-     * 현재 currentDateTime에 시간을 설정해준 뒤 데이터베이스에 저장한다.
+     * 게시물 생성
      */
-    public Post createPost(Post post) {
+    public Post createPost(Post post, LoginCustomer user) {
         if (post.getTitle().isBlank() || post.getContent().isBlank()) {
             throw new IllegalArgumentException();
         }
-        return postRepository.createPost(post);
+        return postRepository.createPost(post, user);
     }
 
-    // 모든 게시글을 가져오는 기능을 만들어야 하니까
-    // 게시글을 전부 가져오는 내용은 접속 했을때 전부 가져오면 되니까
+    /**
+     * 게시물 전체 조회
+     */
     public List<Post> readAllPost() {
         return postRepository.readAllPost();
     }
 
-    // 해당 게시글만 하나 찾아오자.
+    /**
+     * 특정 게시물 조회
+     */
     public Post readAnyPost (Integer id) {
         return postRepository.readAnyPost(id);
     }
 
-    // 조회수 업데이트
+    /**
+     * 게시물 조회수 증가
+     */
     public void incrementViewCount(Integer id) {
         postRepository.viewCountUpdate(id);
     }
 
+    /**
+     * 게시물 좋아요 증가
+     */
     public void incrementLikeCount(Integer id) {
         postRepository.likeCountUpdate(id);
     }

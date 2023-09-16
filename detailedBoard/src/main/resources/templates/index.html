@@ -23,16 +23,14 @@
 
 <div class="content">
     <div class="profile">
-        <a id = "profile" th:if="${session.loginUser != null}" th:href="@{/profile}">[[ ${session.loginUser.email} ]]</a>
+        <a id = "profile" th:if="${session.loginUser != null}" th:href="@{/profile}">[[ ${session.loginUser.userId} ]]</a>
         <a th:href="@{/register}">
             회원가입
         </a>
 
-        <a id = "logout" th:href="@{/logout}">
-            로그아웃
-        </a>
-<!--        인증되지 않은 사용자는 로그인을 보여줌-->
-        <a id = "loginTag" th:href="@{/login}">로그인</a>
+<!-- 로그인 되지 않은 사용자는 로그인 표시 그렇지 않다면 로그아웃표시      -->
+        <a id = "loginTag" th:if="${session.loginUser == null }" th:href="@{/login}">로그인</a>
+        <a id = "logout" th:if="${session.loginUser != null }" th:href="@{/logout}">로그아웃</a>
     </div>
     <div class="container">
         <div class="top-section">

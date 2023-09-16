@@ -1,6 +1,7 @@
 package com.example.detailedBoard.repository;
 
 import com.example.detailedBoard.Interface.PostRepositoryInterface;
+import com.example.detailedBoard.domain.LoginCustomer;
 import com.example.detailedBoard.domain.Post;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,6 @@ import java.util.List;
 //@Slf4j
 public class PostRepository implements PostRepositoryInterface {
     private final DataSource dataSource;
-    // 로그 수집을 목적으로 로깅을 사용.
     private final Logger log = LoggerFactory.getLogger(getClass());
 
 
@@ -28,17 +28,12 @@ public class PostRepository implements PostRepositoryInterface {
     }
 
 
-    // post가 생성될때 발생될 수 있는 에러가 무엇인지 생각해보자.
-    // 우선 게시글을 dto로 받아오게 되니 해당 dao 객체를 실제 데이터베이스에서 저장하는데 SQLException이 발생할 수 있다.
-    // 따라서 데이터베이스에 저장할때 문제가 발생될 수 있다.
-    // 또한 네트워크 문제로 인해서 문제가 발생될 수 있다.
-        // 이런 경우 특정 네트워크 횟수를 지정해서 지정한 만큼 재시도하여 재시도를 했음에도 불구하고 네트워크 문제 때문에 해결이 안된다면
-        // 다른 에러를 넘겨줄 수 있다.
-        // 제목, 내용 둘 중 하나라도 null이면 안되기 때문에 왜? title과 Content의 반환 타입은 String이기 때문에
-        // 값이 들어오지 않는다면 null이며 SQLException을 발생시킨다.
-
+    /**
+     * 게시물 생성
+     */
     @Override
-    public Post createPost(Post post) {
+    public Post createPost(Post post, LoginCustomer user) {
+        // 이제 username 에다가는 사용자 정보를 넣어주자.
         String sql = "insert into post values(?, ?, ?, ?, ?, ?, ?)";
         ResultSet rs = null;
         try (Connection con = dataSource.getConnection();
@@ -52,7 +47,8 @@ public class PostRepository implements PostRepositoryInterface {
             post.setCurrentDatetime(formatDateTime);
 
             // pstmt value 값 매핑.
-            pstmt.setString(2, "taesun");
+            // 사용자 정보를 받아야하는데
+            pstmt.setString(2, user.getUserId());
             pstmt.setString(3, post.getTitle());
             pstmt.setString(4, post.getContent());
             pstmt.setString(5, post.getCurrentDatetime());
@@ -68,9 +64,8 @@ public class PostRepository implements PostRepositoryInterface {
             // resultSet object를 리턴하게 될테니까
             // insert 가 잘 들어갔다면
             if(rs.next()) {
-                // post가 정상적으로 들어 왔을때
-                // 생성된 게시물로 이동할 수 있게끔 해주는게 좋지 않을까?
-                // 만약 생성된 게시물이 제대로 오지 않았을 경우는 error페이지를 보여주면 되니까
+                // post가 정상적으로 생성이 되었다면
+                // 해당 userId값의 post값도 같이 올려주면 되겠네
                 post.setId(rs.getInt(1));
                 return post;
             }
@@ -92,7 +87,9 @@ public class PostRepository implements PostRepositoryInterface {
         throw new RuntimeException("Failed to retrieve generated ID");
     }
 
-    // readPost
+    /**
+     * 특정 게시물 읽기
+     */
     @Override
     public Post readAnyPost(Integer id) {
         String sql = "select * from post where id = ?";
@@ -131,7 +128,9 @@ public class PostRepository implements PostRepositoryInterface {
         return post;
     }
 
-    // db에 있는 내용들을 전부다 가져와서 tr에 뿌려주어야 겠지
+    /**
+     * 게시물 전체 읽기
+     */
     @Override
     public List<Post> readAllPost() {
         // 우선 DB에 있는 내용들을 다 가지고 오려면 해당 db에서 모든 객체들을 다 가져와야 하니까
@@ -177,7 +176,9 @@ public class PostRepository implements PostRepositoryInterface {
 
     }
 
-    // 조회수는 해당 게시글에 접속했을때 하나씩 올라야하니까
+    /**
+     * 조회수 업데이트
+     */
     @Override
     public void viewCountUpdate(Integer id) {
         String sql = "update post set viewCount = viewCount + 1 where id = ?";
@@ -197,15 +198,11 @@ public class PostRepository implements PostRepositoryInterface {
 
     }
 
-    // 좋아요 개수 올리기.
+    /**
+     * 게시물 좋아요 증가
+     */
     @Override
     public void likeCountUpdate(Integer id) {
-        // 간단한 update 쿼리문인데도 불구하고 시간이 30005ms나 걸린다. 왜그럴까?
-        // 1ms = 0.001 기 때문에
-        // 30005ms = 30005 * 0.001s 이 되기 때문에
-        // 약 30.005초 정도 걸린다.
-        // 간단한 쿼리문인데도 30초나 걸리나?
-        // 보아하니 Connection poll에 대해서 이해를 해야 하는 것 같다.
         String sql = "update post set likeCount = likeCount + 1 where id = ?";
         Connection con = null;
         PreparedStatement pstmt = null;

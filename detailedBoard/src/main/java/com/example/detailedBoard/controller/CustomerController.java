@@ -79,8 +79,8 @@ public class CustomerController {
 
     /**
      * 로그인 요청
-     * 쿠키 로그인 요청
-     * 세션 로그인 요청
+     * 쿠키 로그인 요청 o
+     * 세션 로그인 요청 o
      * spring security 다해보자
      */
 //    @PostMapping("/login/user")
@@ -100,8 +100,9 @@ public class CustomerController {
 //    }
 
 
-
-
+    /**
+     * 세션 로그인
+     */
     // 세션 로그인 한번 해보자.
     @PostMapping("/login/user")
     public String userLogin(HttpServletRequest request, LoginCustomer loginCustomer) {
@@ -125,7 +126,7 @@ public class CustomerController {
      * 로그아웃
      */
     @RequestMapping("/logout")
-    public String logOut(HttpServletRequest request, HttpServletResponse response) {
+    public String userLogout(HttpServletRequest request, HttpServletResponse response) {
         HttpSession session = request.getSession(false);
         // 세션이 이미 삭제되어 있다면
         if (session == null) {

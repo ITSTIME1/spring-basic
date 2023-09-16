@@ -18,10 +18,6 @@ import javax.security.sasl.AuthenticationException;
 public class CustomerService{
     private final CustomerRepository customerRepository;
     private final Logger log = LoggerFactory.getLogger(getClass());
-    // 크립토 strength 는 default 가 10
-    // 따라서 생성자를 그냥 디폴트로 생성하게 된다면 -1 값이 넘어가고
-    // -1 값이 넘어가게 된다면 삼항 연산자에 의해서 strength = 10으로 정해짐
-    // 만약 strength값이 10~31 이하라면 해당 지정한 strength가 지정됨
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public CustomerService(CustomerRepository customerRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
@@ -31,9 +27,7 @@ public class CustomerService{
 
 
     /**
-     * 고객 정보 생성 만약 아이디가 중복되거나, 이메일이 중복된다면 DuplicateKeyException발생.
-     * 그렇지 않다면 암호화 후 디비에 저장.
-     * @return true
+     * 유저 생성
      */
     public Boolean createUser(RegisterCustomer registerCustomer) {
         if(customerRepository.isUserIDAvailable(registerCustomer.getUserId())
@@ -44,10 +38,9 @@ public class CustomerService{
         return customerRepository.createUser(registerCustomer);
     }
 
-    // 해당 로그인 정보자체를 넘겨줄거기 때문에 반환타입은 LoginCustomer로 작성한다.
-    // 비밀번호를 검사하는 항목을 만든다.
-    // 따라서 이메일이 존재하고, 패스워드가 일치한다면 해당 유저 정보를 반환하는 로직을 작성.
-    // 그럼 해당 유저의 id 번호를 리턴받고
+    /**
+     * 유저 로그인
+     */
     public LoginCustomer loginUser(String email, String password) {
         // password를 암호화해서 저장해둔뒤, 암호화한 패스워드와 검사한다.
         log.info("유저 패스워드 : " + password);
@@ -60,6 +53,13 @@ public class CustomerService{
             }
         }
         throw new IllegalArgumentException("이메일이나 비밀번호가 일치하지 않습니다.");
+    }
+
+    /**
+     * 유저 게시물 개수 증가.
+     */
+    public void incrementUserPostCount(String userId) {
+        customerRepository.incrementPostCount(userId);
     }
 
 }

@@ -23,7 +23,9 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         this.dataSource = dataSource;
     }
 
-    // 여기서 이제 유저를 생성해야 되는데
+    /**
+     * 유저 생성
+     */
     @Override
     public Boolean createUser(RegisterCustomer registerCustomer) {
         String sql = "insert into board.customer values(?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -52,11 +54,14 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         }
     }
 
+    /**
+     * 특정 유저 조회
+     */
     @Override
     public LoginCustomer getAnyUser(String email, String password) {
         // email이 일치하는 사용자의 정보만 가지고 오자
         log.info("getAnyUser " + email + " " + password);
-        String sql = "select id, email, password from board.customer where email = ? and password = ?";
+        String sql = "select id, userId, email, password from board.customer where email = ? and password = ?";
         ResultSet rs = null;
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -70,6 +75,7 @@ public class CustomerRepository implements CustomerRepositoryInterface {
                 log.info("유저 암호화한 패스워드 DB: " + rs.getString("password"));
                 LoginCustomer loginCustomer = new LoginCustomer();
                 loginCustomer.setId(rs.getInt("id"));
+                loginCustomer.setUserId(rs.getString("userId"));
                 loginCustomer.setEmail(rs.getString("email"));
                 loginCustomer.setPassword(rs.getString("password"));
                 return loginCustomer;
@@ -88,9 +94,37 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         return null;
     }
 
+
     /**
-     * 유저 아이디 중복 여부 검사.
-     * @return
+     * 특정 유저의 게시물 증가.
+     */
+    @Override
+    public boolean incrementPostCount(String userId) {
+        String sql = "update board.customer set postCount = postCount + 1 where userId = ?";
+        ResultSet rs = null;
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt =  con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
+            pstmt.setString(1, userId);
+            pstmt.executeUpdate();
+            rs = pstmt.getGeneratedKeys();
+            return rs.next();
+
+        } catch (SQLException e){
+            throw new RuntimeException(e);
+        } finally {
+            if (rs!=null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+        }
+    }
+
+    /**
+     * 유저 아이디 중복 여부 검사
      */
     @Override
     public Boolean isUserIDAvailable(String userId) {
@@ -120,7 +154,6 @@ public class CustomerRepository implements CustomerRepositoryInterface {
 
     /**
      * 유저 이메일 중복 여부 검사.
-     * @return
      */
     @Override
     public Boolean isUserEmailAvailable(String userEmail) {
@@ -149,9 +182,7 @@ public class CustomerRepository implements CustomerRepositoryInterface {
     }
 
     /**
-     * 유저 비밀번호 검사 암호화된 것과 검사한다.
-     * @param password
-     * @return
+     * 유저 패스워드 검사
      */
     @Override
     public String isUserPasswordAvailable(String userEmail) {
@@ -183,7 +214,9 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         }
     }
 
-    // 유저 생성 로직
+    /**
+     * 유저 생성 메인 로직.
+     */
     private void createCustomer(RegisterCustomer registerCustomer, PreparedStatement pstmt) throws SQLException {
         pstmt.setInt(1, registerCustomer.getId());
         pstmt.setString(2, registerCustomer.getUserId());

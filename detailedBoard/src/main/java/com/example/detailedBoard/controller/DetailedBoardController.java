@@ -3,6 +3,7 @@ package com.example.detailedBoard.controller;
 import com.example.detailedBoard.domain.ErrorResponse;
 import com.example.detailedBoard.domain.LoginCustomer;
 import com.example.detailedBoard.domain.Post;
+import com.example.detailedBoard.service.CustomerService;
 import com.example.detailedBoard.service.PostService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -29,18 +30,20 @@ import java.util.Map;
 @Controller
 public class DetailedBoardController {
 
-    public PostService postService;
+    private PostService postService;
+    private CustomerService customerService;
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    public DetailedBoardController(PostService postService) {
+    public DetailedBoardController(PostService postService, CustomerService customerService) {
         this.postService = postService;
+        this.customerService = customerService;
     }
 
     /**
      * indexPage = 초기페이지 (모든 게시물을 조회함)
      */
     @GetMapping("/")
-    public String indexPage(Model model) {
+    public String mainPage(Model model) {
         // model객체에 넘겨서 index로 넘겨준다.
         model.addAttribute("list", postService.readAllPost());
         return "index";
@@ -50,7 +53,12 @@ public class DetailedBoardController {
      * moveWritePage = 게시물 작성 페이지로 이동하기
      */
     @GetMapping("/write-post")
-    public String moveWritePage() {
+    public String writePage(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        LoginCustomer user = (LoginCustomer) session.getAttribute("loginUser");
+        if (user == null) {
+            throw new NullPointerException();
+        }
         return "write";
     }
 
@@ -59,12 +67,19 @@ public class DetailedBoardController {
      * createPost = 게시물 생성
      */
     @PostMapping("/post")
-    public String createPost(Post post, Model model) {
+    public String createPost(HttpServletRequest request, Post post, Model model) {
 
-        // create Post 를 받고
-        // rumtimeException, illegalException이 발생하지 않는한 정상적인 값이 들어올 것이기 때문에
-        // 해당 post 객체를 view 페이지에 보여주는 것으로 보면 될 것 같다.
-        Post result = postService.createPost(post);
+        HttpSession session = request.getSession();
+        LoginCustomer user = (LoginCustomer) session.getAttribute("loginUser");
+        if (user == null) {
+            throw new NullPointerException();
+        }
+        // post 객체와 세션ID를 통해 userId를 얻어옴
+        // 그리고 post 갯수도 올려야 하니까 Id값을 기준으로 올려도 될거 같은데
+        // 그럼 LoginCustomer 값을 보내자.
+        Post result = postService.createPost(post, user);
+        // 포스트가 정상적으로 생성이 되었다면 유저의 post값도 올린다.
+        customerService.incrementUserPostCount(user.getUserId());
         model.addAttribute("post", result);
         return "view";
     }
