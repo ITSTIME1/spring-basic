@@ -55,8 +55,8 @@ public class PostService {
     /**
      * 게시물 좋아요 증가
      */
-    public void incrementLikeCount(Integer id) {
-        postRepository.likeCountUpdate(id);
+    public void incrementLikeCount(int userId, Integer id) {
+        postRepository.isLiked(userId, id);
     }
 
 }

@@ -30,27 +30,40 @@ public class CustomerRepository implements CustomerRepositoryInterface {
     public Boolean createUser(RegisterCustomer registerCustomer) {
         String sql = "insert into board.customer values(?, ?, ?, ?, ?, ?, ?, ?, ?)";
         ResultSet rs = null;
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+        Connection con = null;
+        try {
+            con = dataSource.getConnection();
+            con.setAutoCommit(false);
+            try (PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
+                // 유저생성
+                createCustomer(registerCustomer, pstmt);
+                pstmt.executeUpdate();
+                rs = pstmt.getGeneratedKeys();
 
-            // 유저생성
-            createCustomer(registerCustomer, pstmt);
-            pstmt.executeUpdate();
-            rs = pstmt.getGeneratedKeys();
+                // 유저를 생성한게 존재한다면 true를 리턴하고, 그렇지 않으면 false를 리턴한다.
+                con.commit();
+                return rs.next();
+            } catch (SQLException e) {
+                con.rollback();
+                throw new RuntimeException(e);
+            } finally {
+                if (rs!=null) {
+                    try {
+                        rs.close();
+                    } catch (SQLException e) {
+                        throw new RuntimeException("Failed to close resultset");
+                    }
 
-            // 유저를 생성한게 존재한다면 true를 리턴하고, 그렇지 않으면 false를 리턴한다.
-            return rs.next();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (rs!=null) {
+                }
                 try {
-                    rs.close();
+                    con.close();
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Failed to close conneciton");
                 }
 
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get connection");
         }
     }
 
@@ -59,8 +72,7 @@ public class CustomerRepository implements CustomerRepositoryInterface {
      */
     @Override
     public LoginCustomer getAnyUser(String email, String password) {
-        // email이 일치하는 사용자의 정보만 가지고 오자
-        log.info("getAnyUser " + email + " " + password);
+
         String sql = "select id, userId, email, password from board.customer where email = ? and password = ?";
         ResultSet rs = null;
         try (Connection con = dataSource.getConnection();
@@ -72,13 +84,14 @@ public class CustomerRepository implements CustomerRepositoryInterface {
             // 만약 customer 값이 존재한다면
             // 만약 유저 정보가 존재하지 않는다면
             if (rs.next()) {
-                log.info("유저 암호화한 패스워드 DB: " + rs.getString("password"));
                 LoginCustomer loginCustomer = new LoginCustomer();
                 loginCustomer.setId(rs.getInt("id"));
                 loginCustomer.setUserId(rs.getString("userId"));
                 loginCustomer.setEmail(rs.getString("email"));
                 loginCustomer.setPassword(rs.getString("password"));
                 return loginCustomer;
+            } else {
+                throw new NullPointerException();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -87,11 +100,10 @@ public class CustomerRepository implements CustomerRepositoryInterface {
                 try {
                     rs.close();
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Failed to close resultset");
                 }
             }
         }
-        return null;
     }
 
 
@@ -102,25 +114,34 @@ public class CustomerRepository implements CustomerRepositoryInterface {
     public boolean incrementPostCount(String userId) {
         String sql = "update board.customer set postCount = postCount + 1 where userId = ?";
         ResultSet rs = null;
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt =  con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
-            pstmt.setString(1, userId);
-            pstmt.executeUpdate();
-            rs = pstmt.getGeneratedKeys();
-            return rs.next();
+        Connection con = null;
+        try {
+            con = dataSource.getConnection();
+            con.setAutoCommit(false);
+            try (PreparedStatement pstmt =  con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
+                pstmt.setString(1, userId);
+                pstmt.executeUpdate();
+                rs = pstmt.getGeneratedKeys();
+                con.commit();
+                return rs.next();
 
-        } catch (SQLException e){
-            throw new RuntimeException(e);
-        } finally {
-            if (rs!=null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
+            } catch (SQLException e){
+                con.rollback();
+                throw new RuntimeException(e);
+            } finally {
+                if (rs!=null) {
+                    try {
+                        rs.close();
+                    } catch (SQLException e) {
+                        throw new RuntimeException("Failed to close resultset");
+                    }
                 }
-
+                con.close();
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
+
     }
 
     /**
@@ -190,16 +211,16 @@ public class CustomerRepository implements CustomerRepositoryInterface {
         ResultSet rs = null;
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
-            // 패스워드를 바인딩해준다.
+
             pstmt.setString(1, userEmail);
             rs = pstmt.executeQuery();
-            // 만약 중복된 값이 있으면 true가 될거고 없으면 false가 될거고
-            // 여기서 authentication이 나는데 음 결국 일치하는 테이블을 찾을 수 없다는거 같은데
+
             if(rs.next()) {
                 return rs.getString("password");
             } else {
                 throw new AuthenticationException();
             }
+
         } catch (SQLException | AuthenticationException e){
             throw new RuntimeException(e);
         } finally {
@@ -207,7 +228,7 @@ public class CustomerRepository implements CustomerRepositoryInterface {
                 try {
                     rs.close();
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Failed to clos resultset");
                 }
 
             }

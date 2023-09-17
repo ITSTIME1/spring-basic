@@ -117,7 +117,8 @@ public class CustomerController {
         session.setAttribute("loginUser", userInfo);
         // 1분 = 60초
         // 30분 = 1800초
-        session.setMaxInactiveInterval(60);
+        // 30분간 세션 유지
+        session.setMaxInactiveInterval(60 * 30);
         log.info(String.valueOf(session.getAttribute("loginUser")));
         return "redirect:/";
     }

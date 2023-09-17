@@ -59,7 +59,7 @@
                         <td th:text="${board.username}"><a href="#">James Yates</a></td>
 
                         <td>
-                            <a style="color:orange" th:text="${board.getTitle()}" th:href="@{/view-post/{id}(id = ${board.getId()})}">
+                            <a id = "stop" style="color:orange" th:text="${board.getTitle()}" th:href="@{/view-post/{id}(id = ${board.getId()})}">
                                 이런 식으로 작성되면 될거 같은데?
                             </a>
                         </td>

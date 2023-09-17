@@ -36,56 +36,64 @@ public class PostRepository implements PostRepositoryInterface {
         // 이제 username 에다가는 사용자 정보를 넣어주자.
         String sql = "insert into post values(?, ?, ?, ?, ?, ?, ?)";
         ResultSet rs = null;
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        Connection con = null; // Connection 변수를 밖으로 빼줍니다.
 
-            pstmt.setInt(1, post.getId());
-            // 데이터베이스에 입력하게 될 시간 설정.
-            LocalDateTime nowDateTime = LocalDateTime.now();
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            String formatDateTime = dateTimeFormatter.format(nowDateTime);
-            post.setCurrentDatetime(formatDateTime);
+        try {
+            con = dataSource.getConnection();
+            con.setAutoCommit(false);
 
-            // pstmt value 값 매핑.
-            // 사용자 정보를 받아야하는데
-            pstmt.setString(2, user.getUserId());
-            pstmt.setString(3, post.getTitle());
-            pstmt.setString(4, post.getContent());
-            pstmt.setString(5, post.getCurrentDatetime());
-            pstmt.setInt(6, post.getViewCount());
-            pstmt.setInt(7, post.getLikeCount());
-            // 이쪽에서 문제가 생기게 된다면 어짜피 SQLException을 터트릴거고
-            // runtimeException으로 감싸서 클라이언트로전송.
-            pstmt.executeUpdate();
+            try (PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                pstmt.setInt(1, post.getId());
+                // 데이터베이스에 입력하게 될 시간 설정.
+                LocalDateTime nowDateTime = LocalDateTime.now();
+                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String formatDateTime = dateTimeFormatter.format(nowDateTime);
+                post.setCurrentDatetime(formatDateTime);
 
-            // insert문을 조회하고 난 뒤 해당 생성된 키 값을 반환
-            rs = pstmt.getGeneratedKeys();
+                // pstmt value 값 매핑.
+                // 사용자 정보를 받아야하는데
+                pstmt.setString(2, user.getUserId());
+                pstmt.setString(3, post.getTitle());
+                pstmt.setString(4, post.getContent());
+                pstmt.setString(5, post.getCurrentDatetime());
+                pstmt.setInt(6, post.getViewCount());
+                pstmt.setInt(7, post.getLikeCount());
 
-            // resultSet object를 리턴하게 될테니까
-            // insert 가 잘 들어갔다면
-            if(rs.next()) {
-                // post가 정상적으로 생성이 되었다면
-                // 해당 userId값의 post값도 같이 올려주면 되겠네
-                post.setId(rs.getInt(1));
-                return post;
+                pstmt.executeUpdate();
+
+                // insert문을 조회하고 난 뒤 해당 생성된 키 값을 반환
+                rs = pstmt.getGeneratedKeys();
+                con.commit();
+                if (rs.next()) {
+                    post.setId(rs.getInt(1));
+                }
+            } catch (SQLException e) {
+                con.rollback();
+                throw new RuntimeException(e);
             }
 
+            return post;
         } catch (SQLException e) {
-            // 데이터베이스에 문제가 생겼다면 Runtime을 보낸다.
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to get connection");
         } finally {
+            // 자원을 닫습니다.
             if (rs != null) {
                 try {
                     rs.close();
                 } catch (SQLException e) {
-                    // 자원을 중지할때 문제가 생겼다면 runtimeException을 보낸다.
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Failed to close ResultSet", e);
+                }
+            }
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException("Failed to close Connection", e);
                 }
             }
         }
-        // post가 보내져야 하는데 보내지지 못했다면
-        throw new RuntimeException("Failed to retrieve generated ID");
     }
+
 
     /**
      * 특정 게시물 읽기
@@ -93,19 +101,15 @@ public class PostRepository implements PostRepositoryInterface {
     @Override
     public Post readAnyPost(Integer id) {
         String sql = "select * from post where id = ?";
-        Post post = new Post();
         ResultSet rs = null;
         try (Connection con = dataSource.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql);) {
 
             pstmt.setInt(1, id);
-            // 쿼리에 의해서 생성되어진 ResultSet 객체를 리턴한다.
-            // 이거에 관해서 블로그 포스팅 해보자.
-            // resultset에 관해서!
             rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                log.info("해당 id" + id);
+                Post post = new Post();
                 post.setId(rs.getInt("id"));
                 post.setUsername(rs.getString("username"));
                 post.setTitle(rs.getString("title"));
@@ -113,6 +117,9 @@ public class PostRepository implements PostRepositoryInterface {
                 post.setLikeCount(rs.getInt("likeCount"));
                 post.setViewCount(rs.getInt("viewCount"));
                 post.setCurrentDatetime(rs.getString("currentDatetime"));
+                return post;
+            } else {
+                throw new NullPointerException();
             }
         }  catch (SQLException e) {
             throw new RuntimeException(e);
@@ -121,11 +128,11 @@ public class PostRepository implements PostRepositoryInterface {
                 try {
                     rs.close();
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Failed to close resultset");
                 }
             }
         }
-        return post;
+
     }
 
     /**
@@ -133,24 +140,15 @@ public class PostRepository implements PostRepositoryInterface {
      */
     @Override
     public List<Post> readAllPost() {
-        // 우선 DB에 있는 내용들을 다 가지고 오려면 해당 db에서 모든 객체들을 다 가져와야 하니까
-        // sql문을 작성하고 해당 sql문을 통해서 모든 데이터를 가져오는 방법으로 해보자.
-        // sql문을 작성해서 모든 데이터를 받고
         String sql = "select * from post";
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
 
-        try {
-            con = dataSource.getConnection();
-            pstmt = con.prepareStatement(sql);
-            rs = pstmt.executeQuery();
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
 
             List<Post> postList = new ArrayList<>();
 
-            // 모든 데이터를 DB에서 꺼내와서 post객체를 만들어 준다음 postList로 넘김.
             while (rs.next()) {
-                // rs.next()를 통해서 row cursor를 하나씩 옮기는거지
                 Post post = new Post();
                 post.setId(rs.getInt("id"));
                 post.setUsername(rs.getString("username"));
@@ -163,13 +161,11 @@ public class PostRepository implements PostRepositoryInterface {
             }
 
             return postList;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            // 주어진 connection객체를 수행하고 연결을 닫는다.
-            DataSourceUtils.releaseConnection(con, dataSource);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to read all post");
         }
     }
+
 
     @Override
     public void delete() {
@@ -182,46 +178,173 @@ public class PostRepository implements PostRepositoryInterface {
     @Override
     public void viewCountUpdate(Integer id) {
         String sql = "update post set viewCount = viewCount + 1 where id = ?";
+        Connection con = null;
 
-        // try-with-resource 문을 통해서 자동으로 자원을 해제 할 수 있도록 해준다.
+        try {
+            con = dataSource.getConnection();
+            con.setAutoCommit(false); // 트랜잭션 시작
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                pstmt.setInt(1, id);
+                pstmt.executeUpdate();
+
+                con.commit(); // 트랜잭션 커밋
+            } catch (SQLException e) {
+                con.rollback(); // 예외 발생 시 롤백
+                throw new RuntimeException("Rollback failed", e);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get connection");
+        } finally {
+            try {
+                if (con != null) {
+                    con.close();
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException("Failed to close connection");
+            }
+        }
+    }
+
+    /**
+     * 게시물 좋아요 여부 체크
+     */
+    @Override
+    public void isLiked(Integer userId, Integer id) {
+        // 우선적으로 확인해봐야지
+        String sql = "select * from board.likes where userId = ? and postId = ?";
+        ResultSet rs = null;
         try(Connection con = dataSource.getConnection();
             PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setInt(1, id);
-            pstmt.executeUpdate();
+            // 1 은 userId 그리고 2는 postId
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, id);
+            rs = pstmt.executeQuery();
+
+            // 이게 true를 반환하게 되면 userId 가 post_Id를 좋아요를 누른거고, 그렇지 않으면 누르지 않은거니까
+            if(rs.next()) {
+                // 좋아요 삭제
+                likeDelete(userId, id);
+            } else {
+                // 좋아요를 추가해주고
+                likeInsert(userId, id);
+            }
+            // 좋아요를 반영해준다.
+            likeUpdate(id);
         } catch (SQLException e) {
-            // sql exception일 발생되면 runtime exception으로 포장해서 넘겨주면 된다.
-            // sql exception은 데이터베이스 장애나 네트워크 장애가 일어나는 경우이고, 결국 service layer나 controller layer에서
-            // 해결할 수도 없다.
-            // 따라서 클라이언트에게 해당 사실을 알려준다.
             throw new RuntimeException(e);
+        } finally {
+            if(rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException("Failed to close resultset");
+                }
+            }
+        }
+    }
+
+    /**
+     * post의 likeCount를 업데이트한다.
+     */
+    private void likeUpdate(Integer id) {
+        // join을 이용해야 할거 같은데
+        // postid가 같은 것들을 찾아서 count해서 likeCount에 반영하면 될거 같은데
+        String sql = "update board.post set likeCount = " +
+                "(select count(postId) from board.likes where postId = ?) where id = ?";
+
+        Connection con = null;
+        try {
+            con = dataSource.getConnection();
+            // 트랜잭션 시작
+            con.setAutoCommit(false);
+
+            try (PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                // 1 은 userId 그리고 2는 postId
+                pstmt.setInt(1, id);
+                pstmt.setInt(2, id);
+                pstmt.executeUpdate();
+                con.commit();
+            } catch (SQLException e) {
+                // 업데이트 진행하다 문제가 발생 되었다면, 롤백진행
+                con.rollback();
+                throw new RuntimeException(e);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get onnection");
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException("Failed to close connection");
+                }
+            }
+        }
+    }
+
+    /**
+     * likes 테이블에 좋아요 반영
+     */
+    private void likeInsert (Integer userId, Integer id) {
+        String sql = "insert into board.likes value (?, ?)";
+        Connection con = null;
+        try {
+            con = dataSource.getConnection();
+            con.setAutoCommit(false);
+            try(PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                // 1 은 userId 그리고 2는 postId
+                pstmt.setInt(1, userId);
+                pstmt.setInt(2, id);
+                pstmt.executeUpdate();
+                con.commit();
+            } catch (SQLException e) {
+                con.rollback();
+                throw new RuntimeException(e);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get connection");
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException("Failed to close conneciton");
+                }
+            }
         }
 
     }
 
     /**
-     * 게시물 좋아요 증가
+     * like 테이블에서 해당 정보삭제
      */
-    @Override
-    public void likeCountUpdate(Integer id) {
-        String sql = "update post set likeCount = likeCount + 1 where id = ?";
+    private void likeDelete(Integer userId, Integer id) {
+        String sql = "delete from board.likes where userId = ? and postId = ?";
         Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-
-        // 좋아요를 올려준다.
         try {
             con = dataSource.getConnection();
-            pstmt = con.prepareStatement(sql);
-            // 10초를 타임아웃으로 설정해둔뒤
-            // 10초가 넘어간다면 SQLtimeException이 발생하도록 한다.
-            pstmt.setQueryTimeout(10);
-            pstmt.setInt(1, id);
-            rs = pstmt.executeQuery();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+            con.setAutoCommit(false);
+            try(PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                // 1 은 userId 그리고 2는 postId
+                pstmt.setInt(1, userId);
+                pstmt.setInt(2, id);
+                pstmt.executeUpdate();
+                con.commit();
+            } catch (SQLException e) {
+                con.rollback();
+                throw new RuntimeException(e);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         } finally {
-            // 주어진 connection객체를 수행하고 연결을 닫는다.
-            DataSourceUtils.releaseConnection(con, dataSource);
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException("Failed to close connection");
+                }
+            }
         }
     }
 }

@@ -13,3 +13,13 @@ $(function() {
   	}
   });
 });
+
+
+let back = document.getElementById("stop");
+
+back.addEventListener("click", ()=>{
+	history.pushState(null, null, "http://localhost:8080");
+	window.onpopstate = function(event) {
+		history.go(1);
+	};
+});

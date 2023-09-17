@@ -13,5 +13,6 @@ public interface PostRepositoryInterface {
     List<Post> readAllPost();
     void delete();
     void viewCountUpdate(Integer id);
-    void likeCountUpdate(Integer id);
+    void isLiked(Integer userId, Integer id);
+
 }

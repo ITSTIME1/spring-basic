@@ -54,11 +54,7 @@ public class DetailedBoardController {
      */
     @GetMapping("/write-post")
     public String writePage(HttpServletRequest request) {
-        HttpSession session = request.getSession();
-        LoginCustomer user = (LoginCustomer) session.getAttribute("loginUser");
-        if (user == null) {
-            throw new NullPointerException();
-        }
+        getSession(request);
         return "write";
     }
 
@@ -67,21 +63,15 @@ public class DetailedBoardController {
      * createPost = 게시물 생성
      */
     @PostMapping("/post")
-    public String createPost(HttpServletRequest request, Post post, Model model) {
+    public String createPost(HttpServletRequest request, Post post) {
 
-        HttpSession session = request.getSession();
-        LoginCustomer user = (LoginCustomer) session.getAttribute("loginUser");
-        if (user == null) {
-            throw new NullPointerException();
-        }
-        // post 객체와 세션ID를 통해 userId를 얻어옴
-        // 그리고 post 갯수도 올려야 하니까 Id값을 기준으로 올려도 될거 같은데
-        // 그럼 LoginCustomer 값을 보내자.
+        LoginCustomer user = getSession(request);
+
         Post result = postService.createPost(post, user);
-        // 포스트가 정상적으로 생성이 되었다면 유저의 post값도 올린다.
+
         customerService.incrementUserPostCount(user.getUserId());
-        model.addAttribute("post", result);
-        return "view";
+//        model.addAttribute("post", result);
+        return "redirect:/";
     }
 
     /**
@@ -89,17 +79,15 @@ public class DetailedBoardController {
      */
     @GetMapping("/view-post/{id}")
     public String viewPost(@PathVariable(value = "id") Integer id, Model model, HttpServletRequest request) {
-        HttpSession session = request.getSession();
-        LoginCustomer user = (LoginCustomer) session.getAttribute("loginUser");
-        // user 객체가 null이라면 로그인을 하지 않은 상태를 의미.
-        // 따라서 profile에 접근할때 로그아웃 상태라면 로그인된 상태가 아니기 때문에 보여주지 못하는 페이지를 만들어서
-        // 보여줄 수도 있음.
-        if (user == null) {
-            throw new NullPointerException();
+
+        LoginCustomer user = getSession(request);
+
+        if(!user.getUserId().equals(postService.readAnyPost(id).getUsername())) {
+            postService.incrementViewCount(id);
+        } else {
+            log.info("사용자가 작성한 글 ");
         }
-        // 조회수를 먼저 올리고 나서 포스트를 가지고 오자
-        // view로 데이터를 넘겨주는건 index -> view 로 넘길때 조회수를 올리고 view 로 post객체들을 반환하니까
-        postService.incrementViewCount(id);
+
         model.addAttribute("post", postService.readAnyPost(id));
         return "view";
     }
@@ -109,9 +97,29 @@ public class DetailedBoardController {
      * likeCount = 좋아요를 클릭했을 경우, 좋아요 횟수를 올림
      */
     @GetMapping("/like-count/{id}")
-    public String likeCount(@PathVariable(value = "id") Integer id, Model model) {
-        postService.incrementLikeCount(id);
+    public String likeCount(@PathVariable(value = "id") Integer id, Model model, HttpServletRequest request) {
+        LoginCustomer user = getSession(request);
+
+        if(!user.getUserId().equals(postService.readAnyPost(id).getUsername())) {
+            int userId = user.getId();
+            postService.incrementLikeCount(userId, id);
+        } else {
+            log.info("본인 게시글을 좋아요 못올립니다.");
+        }
         return "redirect:/view-post/" + id;
+    }
+
+
+    /**
+     * 세션을 얻는 공통함수.
+     */
+    private static LoginCustomer getSession(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        LoginCustomer user = (LoginCustomer) session.getAttribute("loginUser");
+        if (user == null) {
+            throw new NullPointerException();
+        }
+        return user;
     }
 
 
@@ -136,4 +144,6 @@ public class DetailedBoardController {
                             "다시 시도해 주십시오."));
         }
     }
+
+
 }
